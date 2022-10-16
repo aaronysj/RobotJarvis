@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -12,9 +13,20 @@ var myClient = &http.Client{Timeout: 10 * time.Second}
 var URL_FORMAT = "https://matchweb.sports.qq.com/kbs/list?from=NBA_PC&columnId=100000" +
 	"&startTime=%s&endTime=%s&from=sporthp"
 
+var logger *log.Logger
+
+func init() {
+	logFile, err := os.OpenFile("./output.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		log.Panic("output.log open failed")
+	}
+	logger = log.New(logFile, "", log.Ldate|log.Ltime|log.Lshortfile)
+}
+
 func main() {
+	logger.Println("Jarvis Started...")
 	http.HandleFunc("/robots", robotsHandler)
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	logger.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func robotsHandler(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +45,7 @@ func GenerateMarkdown() MarkDownMsgRequest {
 	today := time.Now().Format("2006-01-02")
 	NBA_URL := fmt.Sprintf(URL_FORMAT, today, today)
 
-	fmt.Println(NBA_URL)
+	logger.Println(NBA_URL)
 	apiResult := new(TencentApiResult)
 	err := getJson(NBA_URL, apiResult)
 	if err != nil {
