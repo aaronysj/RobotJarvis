@@ -7,4 +7,4 @@ if [ "${PID}" != "" ]; then
     echo "Kill PID ${PID}"
 fi
 go build -o Jarvis *.go
-nohup ./Jarvis >> output.log > /dev/null &
+nohup ./Jarvis >> output.log 2>&1 &

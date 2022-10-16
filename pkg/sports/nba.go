@@ -1,9 +1,12 @@
-package main
+package sports
 
 import (
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type GameInfo struct {
@@ -45,6 +48,16 @@ type TencentApiResult struct {
 	Code    int                   `json:"code"`
 	Version string                `json:"version"`
 	Data    map[string][]GameInfo `json:"data"`
+}
+
+type MarkDownMsgRequest struct {
+	MsgType  string      `json:"msgtype"`
+	Markdown MarkdownMsg `json:"markdown"`
+}
+
+type MarkdownMsg struct {
+	Title string `json:"title"`
+	Text  string `json:"text"`
 }
 
 var NUM_0 = "0"
@@ -115,4 +128,60 @@ func free(game *GameInfo) string {
 
 func Equal(s1 string, s2 string) bool {
 	return s1 == s2
+}
+
+var URL_FORMAT = "https://matchweb.sports.qq.com/kbs/list?from=NBA_PC&columnId=100000" +
+	"&startTime=%s&endTime=%s&from=sporthp"
+
+func getJson(url string, target interface{}) error {
+	var myClient = &http.Client{Timeout: 10 * time.Second}
+	r, err := myClient.Get(url)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+
+	return json.NewDecoder(r.Body).Decode(target)
+}
+
+/**
+* 今日NBA
+ */
+func GenerateMarkdown() MarkDownMsgRequest {
+	// 请求更新
+	today := time.Now().Format("2006-01-02")
+	NBA_URL := fmt.Sprintf(URL_FORMAT, today, today)
+
+	apiResult := new(TencentApiResult)
+
+	err := getJson(NBA_URL, apiResult)
+	if err != nil {
+		// todo 异常处理
+		panic(err)
+	}
+
+	games := apiResult.Data[today]
+	var markdown string
+	for _, game := range games {
+		markdown += GetGameMarkdownInfo(&game)
+	}
+	markdown += links()
+
+	markdownMsg := MarkdownMsg{
+		Title: "NBA",
+		Text:  markdown,
+	}
+	return MarkDownMsgRequest{
+		"markdown",
+		markdownMsg,
+	}
+}
+
+func links() string {
+	return `
+👉🏻[schedule](https://nba.stats.qq.com/schedule) [standings](https://nba.stats.qq.com/standings)
+👉🏻[Maigc](http://24zhiboba.com)
+👉🏻[Top10](https://sports.qq.com/nbavideo/topsk/)
+✌🏻[@aaronysj](https://github.com/aaronysj)
+`
 }
