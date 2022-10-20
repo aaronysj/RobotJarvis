@@ -72,8 +72,8 @@ func GetGameMarkdownInfo(game *GameInfo) string {
 
 	leftGoal, _ := strconv.Atoi(game.LeftGoal)
 	rightGoal, _ := strconv.Atoi(game.RightGoal)
-	leftName := game.LeftName
-	rightName := game.RightName
+	leftName := fmt.Sprintf("[%s](https://sports.qq.com/kbsweb/teams.htm?tid=%s&cid=100000)", game.LeftName, game.LeftId)
+	rightName := fmt.Sprintf("[%s](https://sports.qq.com/kbsweb/teams.htm?tid=%s&cid=100000)", game.RightName, game.RightId)
 	if Equal(NUM_2, game.MatchPeriod) {
 		if leftGoal < rightGoal {
 			rightName = " 🏆" + rightName
