@@ -1,9 +1,12 @@
 package utils
 
 import (
+	"bufio"
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
 )
 
 func ParseBody(r *http.Request, x interface{}) {
@@ -12,4 +15,22 @@ func ParseBody(r *http.Request, x interface{}) {
 			return
 		}
 	}
+}
+
+func GetTokens() []string {
+	tokenFile, err := os.Open("./config/tokens.txt")
+	if err != nil {
+		log.Fatal(err)
+		return nil
+	}
+	defer tokenFile.Close()
+
+	fileScanner := bufio.NewScanner(tokenFile)
+	fileScanner.Split(bufio.ScanLines)
+	var tokens []string
+
+	for fileScanner.Scan() {
+		tokens = append(tokens, fileScanner.Text())
+	}
+	return tokens
 }

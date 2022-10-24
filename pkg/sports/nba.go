@@ -1,12 +1,11 @@
 package sports
 
 import (
-	"encoding/json"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
-	"time"
+
+	"github.com/aaronysj/RobotJarvis/pkg/utils"
 )
 
 type GameInfo struct {
@@ -64,8 +63,6 @@ var NUM_0 = "0"
 var NUM_1 = "1"
 var NUM_2 = "2"
 var NUM_3 = "3"
-var firstColor = "#993366"
-var secondColor = "#666633"
 
 func GetGameMarkdownInfo(game *GameInfo) string {
 	var mardown = ""
@@ -84,8 +81,8 @@ func GetGameMarkdownInfo(game *GameInfo) string {
 	}
 
 	mardown += fmt.Sprintf("%s%s%s %s ", letsGoWarroir(game), free(game), game.StartTime[11:16], parseMatchPeriod(game))
-	mardown += fmt.Sprintf("<font color=%s>%s</font> %s vs %s <font color=%s>%s</font> ", firstColor, leftName, game.LeftGoal, game.RightGoal, secondColor, rightName)
-	mardown += fmt.Sprintf("[%s](%s) [数据](https://nba.stats.qq.com/nbascore/?mid=%s) [回放](%s&replay=1)", video(game), game.WebUrl, strings.Split(game.Mid, ":")[1], game.WebUrl)
+	mardown += fmt.Sprintf("%s %s vs %s %s ", leftName, game.LeftGoal, game.RightGoal, rightName)
+	mardown += fmt.Sprintf("[[%s](%s) [数据](https://nba.stats.qq.com/nbascore/?mid=%s) [回放](%s&replay=1)]", video(game), game.WebUrl, strings.Split(game.Mid, ":")[1], game.WebUrl)
 	return mardown + "\n\n"
 }
 
@@ -133,42 +130,31 @@ func Equal(s1 string, s2 string) bool {
 var URL_FORMAT = "https://matchweb.sports.qq.com/kbs/list?from=NBA_PC&columnId=100000" +
 	"&startTime=%s&endTime=%s&from=sporthp"
 
-func getJson(url string, target interface{}) error {
-	var myClient = &http.Client{Timeout: 10 * time.Second}
-	r, err := myClient.Get(url)
-	if err != nil {
-		return err
-	}
-	defer r.Body.Close()
-
-	return json.NewDecoder(r.Body).Decode(target)
-}
-
 /**
 * 今日NBA
  */
-func GenerateMarkdown() MarkDownMsgRequest {
+func GenerateMarkdown(date string) MarkDownMsgRequest {
 	// 请求更新
-	today := time.Now().Format("2006-01-02")
-	NBA_URL := fmt.Sprintf(URL_FORMAT, today, today)
+	NBA_URL := fmt.Sprintf(URL_FORMAT, date, date)
 
 	apiResult := new(TencentApiResult)
 
-	err := getJson(NBA_URL, apiResult)
+	err := utils.GetJson(NBA_URL, apiResult)
 	if err != nil {
 		// todo 异常处理
 		panic(err)
 	}
 
-	games := apiResult.Data[today]
-	var markdown string
+	games := apiResult.Data[date]
+	title := fmt.Sprintf("NBA(%s)", date)
+	markdown := fmt.Sprintf("# %s\n\n", title)
 	for _, game := range games {
 		markdown += GetGameMarkdownInfo(&game)
 	}
 	markdown += links()
 
 	markdownMsg := MarkdownMsg{
-		Title: "NBA",
+		Title: title,
 		Text:  markdown,
 	}
 	return MarkDownMsgRequest{
