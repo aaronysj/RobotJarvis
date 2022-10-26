@@ -82,8 +82,14 @@ func GetGameMarkdownInfo(game *GameInfo) string {
 
 	mardown += fmt.Sprintf("%s%s%s %s ", letsGoWarroir(game), free(game), game.StartTime[11:16], parseMatchPeriod(game))
 	mardown += fmt.Sprintf("%s %s vs %s %s ", leftName, game.LeftGoal, game.RightGoal, rightName)
-	mardown += fmt.Sprintf("[[%s](%s) [数据](https://nba.stats.qq.com/nbascore/?mid=%s) [回放](%s&replay=1)]", video(game), game.WebUrl, strings.Split(game.Mid, ":")[1], game.WebUrl)
+	if gameOnOrGameOver(game) {
+		mardown += fmt.Sprintf("[[%s](%s) [数据](https://nba.stats.qq.com/nbascore/?mid=%s) [回放](%s&replay=1)]", video(game), game.WebUrl, strings.Split(game.Mid, ":")[1], game.WebUrl)
+	}
 	return mardown + "\n\n"
+}
+
+func gameOnOrGameOver(game *GameInfo) bool {
+	return Equal(NUM_1, game.MatchPeriod) || Equal(NUM_2, game.MatchPeriod)
 }
 
 func video(game *GameInfo) string {
